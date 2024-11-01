@@ -2,5 +2,10 @@
 *tmp*
 
 # Ignore local files
-*.local.*
+*.local*
 
+.vscode/*
+
+# Ignore results and problems folder
+results/*
+problems/*
