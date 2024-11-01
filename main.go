@@ -4,38 +4,48 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
-	"your-module/leetcode"
+	"ACGTF/internal/generator"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Create problems directory if it doesn't exist
-	if err := os.MkdirAll("problems", 0755); err != nil {
-		log.Fatalf("Error creating problems directory: %v", err)
+	godotenv.Load()
+	// Get API key from environment variable
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
+		log.Fatal("OPENAI_API_KEY environment variable is required")
 	}
 
-	// Example problems to fetch
-	problems := []string{
-		"two-sum",
-		"add-two-numbers",
-		"longest-substring-without-repeating-characters",
+	// Create generator config
+	config := generator.GeneratorConfig{
+		Provider:  "openai",
+		Model:     "gpt-4o-mini",
+		APIKey:    apiKey,
+		MaxTokens: 2000,
 	}
 
-	for _, titleSlug := range problems {
-		problem, err := leetcode.FetchProblem(titleSlug)
-		if err != nil {
-			log.Printf("Error fetching problem %s: %v", titleSlug, err)
-			continue
-		}
-
-		// Save the problem to the problems directory
-		problemPath := filepath.Join("problems", fmt.Sprintf("%s_%s.json", problem.ID, problem.TitleSlug))
-		if err := leetcode.SaveProblem(problem, problemPath); err != nil {
-			log.Printf("Error saving problem %s: %v", titleSlug, err)
-			continue
-		}
-
-		fmt.Printf("Successfully fetched and saved problem: %s\n", problem.Title)
+	// Initialize generator
+	gen, err := generator.NewGenerator(config)
+	if err != nil {
+		log.Fatalf("Failed to create generator: %v", err)
 	}
-} 
+
+	// Create problem
+	p := generator.Problem{
+		Title:      "Two Sum",
+		Difficulty: "Easy",
+		Statement:  "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+		Parameters: []generator.ProblemParameter{
+			{Name: "nums", Type: "[]int", LowerBound: 2, UpperBound: 10000},
+			{Name: "target", Type: "int", LowerBound: -1000000000, UpperBound: 1000000000},
+		},
+	}
+	// Use the generator...
+	code, err := gen.GenerateCode(&p)
+	if err != nil {
+		log.Fatalf("Failed to generate code: %v", err)
+	}
+	fmt.Println(code)
+}

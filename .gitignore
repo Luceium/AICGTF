@@ -1,11 +1,9 @@
-# Ignore temporary files
-*tmp*
-
 # Ignore local files
+*tmp*
 *.local*
-
+.env
 .vscode/*
 
-# Ignore results and problems folder
-results/*
-problems/*
+
+# Generated files
+out/
