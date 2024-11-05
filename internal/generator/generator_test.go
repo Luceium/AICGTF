@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ func TestNewGenerator(t *testing.T) {
 			name: "valid openai config",
 			config: GeneratorConfig{
 				Provider:  "openai",
-				Model:     "gpt-4",
+				Model:     "gpt-4o-mini",
 				APIKey:    "test-key",
 				MaxTokens: 2000,
 			},
@@ -25,7 +26,7 @@ func TestNewGenerator(t *testing.T) {
 			name: "missing api key",
 			config: GeneratorConfig{
 				Provider:  "openai",
-				Model:     "gpt-4",
+				Model:     "gpt-4o-mini",
 				MaxTokens: 2000,
 			},
 			wantErr:     true,
@@ -52,7 +53,7 @@ func TestNewGenerator(t *testing.T) {
 					t.Error("NewGenerator() error = nil, wantErr true")
 					return
 				}
-				if tt.errContains != "" && !contains(err.Error(), tt.errContains) {
+				if tt.errContains != "" && !strings.Contains(err.Error(), tt.errContains) {
 					t.Errorf("NewGenerator() error = %v, want error containing %v", err, tt.errContains)
 				}
 				return
@@ -67,7 +68,3 @@ func TestNewGenerator(t *testing.T) {
 		})
 	}
 }
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[0:len(substr)] == substr
-} 

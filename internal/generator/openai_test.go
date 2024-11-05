@@ -17,11 +17,11 @@ type httpClient interface {
 
 // mockHTTPClient implements a mock http.Client for testing
 type mockHTTPClient struct {
-	DoFunc func(req *http.Request) (*http.Response, error)
+	RoundTripFunc func(req *http.Request) (*http.Response, error)
 }
 
-func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	return m.DoFunc(req)
+func (m *mockHTTPClient) RoundTrip(req *http.Request) (*http.Response, error) {
+	return m.RoundTripFunc(req)
 }
 
 func TestGetOpenAIGenerator(t *testing.T) {
@@ -66,7 +66,7 @@ func TestOpenAIGenerator_GenerateCode(t *testing.T) {
 
 	// Create mock client
 	mockClient := &mockHTTPClient{
-		DoFunc: func(req *http.Request) (*http.Response, error) {
+		RoundTripFunc: func(req *http.Request) (*http.Response, error) {
 			// Verify request
 			if req.Header.Get("Authorization") != "Bearer test-key" {
 				t.Error("Missing or incorrect Authorization header")
@@ -85,7 +85,7 @@ func TestOpenAIGenerator_GenerateCode(t *testing.T) {
 	gen := &OpenAIGenerator{
 		apiKey: "test-key",
 		model:  "gpt-4",
-		client: mockClient,
+		client: &http.Client{Transport: mockClient},
 	}
 
 	// Test problem
@@ -129,7 +129,7 @@ func TestOpenAIGenerator_SaveGeneratedCode(t *testing.T) {
 
 	// Create generator
 	gen := &OpenAIGenerator{
-		model: "gpt-4",
+		model: "gpt-4o-mini",
 	}
 
 	// Test saving code
@@ -161,8 +161,6 @@ func TestOpenAIGenerator_SaveGeneratedCode(t *testing.T) {
 }
 
 func TestOpenAIGenerator_CleanGeneratedCode(t *testing.T) {
-	gen := &OpenAIGenerator{}
-
 	tests := []struct {
 		name     string
 		input    string
@@ -187,7 +185,7 @@ func TestOpenAIGenerator_CleanGeneratedCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := gen.cleanGeneratedCode(tt.input)
+			result := cleanGeneratedCode(tt.input)
 			if result != tt.expected {
 				t.Errorf("cleanGeneratedCode() = %q, want %q", result, tt.expected)
 			}
