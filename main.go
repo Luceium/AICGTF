@@ -42,10 +42,22 @@ func main() {
 			{Name: "target", Type: "int", LowerBound: -1000000000, UpperBound: 1000000000},
 		},
 	}
-	// Use the generator...
+
+	// Create generated directory if it doesn't exist
+	if err := os.MkdirAll("generated", 0755); err != nil {
+		log.Fatalf("Failed to create generated directory: %v", err)
+	}
+
+	// Generate code
 	code, err := gen.GenerateCode(&p)
 	if err != nil {
 		log.Fatalf("Failed to generate code: %v", err)
 	}
-	fmt.Println(code)
+
+	// Save the generated code
+	if err := generator.SaveGeneratedCode(code, &p, config.Model); err != nil {
+		log.Fatalf("Failed to save generated code: %v", err)
+	}
+
+	fmt.Printf("Successfully generated and saved code for %s\n", p.Title)
 }
