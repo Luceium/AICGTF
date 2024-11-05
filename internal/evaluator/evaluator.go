@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -17,14 +16,9 @@ type EvaluationResult struct {
 	Score         int
 }
 
-var WORK_DIR = "out/generated"
-
 // EvaluateCode performs compilation and quality checks on the generated code
-func EvaluateCode(filename string) (*EvaluationResult, error) {
+func EvaluateCode(filepath string) (*EvaluationResult, error) {
 	result := &EvaluationResult{}
-
-	// Get absolute path
-	filepath := filepath.Join(WORK_DIR, filename)
 
 	// Check if file exists
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
@@ -65,7 +59,8 @@ func runGoVet(filepath string) []string {
 }
 
 func compileCode(filepath string) error {
-	cmd := exec.Command("go", "build", filepath)
+	// Use -o /dev/null to avoid creating executable files
+	cmd := exec.Command("go", "build", "-o", os.DevNull, filepath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("compilation error: %s", string(output))

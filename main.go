@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"ACGTF/internal/evaluator"
 	"ACGTF/internal/generator"
 
 	"github.com/joho/godotenv"
@@ -55,9 +56,17 @@ func main() {
 	}
 
 	// Save the generated code
-	if err := generator.SaveGeneratedCode(code, &p, config.Model); err != nil {
+	filepath, err := generator.SaveGeneratedCode(code, &p, config.Model)
+	if err != nil {
 		log.Fatalf("Failed to save generated code: %v", err)
 	}
 
+	// Evaluate the code quality
 	fmt.Printf("Successfully generated and saved code for %s\n", p.Title)
+	evaluationResult, err := evaluator.EvaluateCode(filepath)
+	if err != nil {
+		log.Fatalf("Failed to evaluate code: %v", err)
+	}
+
+	fmt.Printf("Evaluation result: %v\n", evaluationResult)
 }
