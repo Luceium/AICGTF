@@ -51,15 +51,15 @@ func NewGenerator(config GeneratorConfig) (Generator, error) {
 }
 
 // SaveGeneratedCode saves the generated code to a file
-func SaveGeneratedCode(code string, problem *Problem, model string) error {
+func SaveGeneratedCode(code string, problem *Problem, model string) (string, error) {
 	filename := fmt.Sprintf("%s_%s.go", strings.ToLower(model), problem.Title)
 	filepath := filepath.Join("out/generated", filename)
 
 	if err := os.WriteFile(filepath, []byte(code), 0644); err != nil {
-		return fmt.Errorf("error saving generated code: %v", err)
+		return "", fmt.Errorf("error saving generated code: %v", err)
 	}
 
-	return nil
+	return filepath, nil
 }
 
 // createPrompt creates a prompt for the AI model based on the problem
