@@ -4,11 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 )
 
@@ -19,6 +15,7 @@ type OpenAIGenerator struct {
 	apiKey string
 	model  string
 	client *http.Client
+	Generator
 }
 
 // singleton instance
@@ -59,7 +56,7 @@ type response struct {
 
 // GenerateCode generates Go code for the given problem using OpenAI
 func (g *OpenAIGenerator) GenerateCode(problem *Problem) (string, error) {
-	prompt := g.createPrompt(problem)
+	prompt := createPrompt(problem)
 
 	// Create request body
 	reqBody := request{
@@ -68,6 +65,10 @@ func (g *OpenAIGenerator) GenerateCode(problem *Problem) (string, error) {
 			Role    string `json:"role"`
 			Content string `json:"content"`
 		}{
+			{
+				Role:    "system",
+				Content: "You are a Go code generator for LeetCode problems. Act as software and only output the code. You will loose points for including any other text.",
+			},
 			{
 				Role:    "user",
 				Content: prompt,
@@ -93,76 +94,59 @@ func (g *OpenAIGenerator) GenerateCode(problem *Problem) (string, error) {
 
 	fmt.Printf("Request: %s\n", string(jsonData))
 
-	// Make request
-	resp, err := g.client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
+	// // Make request
+	// resp, err := g.client.Do(req)
+	// if err != nil {
+	// 	return "", fmt.Errorf("error making request: %v", err)
+	// }
+	// defer resp.Body.Close()
 
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response: %v", err)
-	}
+	// // Read response body
+	// body, err := io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return "", fmt.Errorf("error reading response: %v", err)
+	// }
 
-	// Check status code
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
+	// // Check status code
+	// if resp.StatusCode != http.StatusOK {
+	// 	return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	// }
 
-	// Parse response
-	var respBody response
-	if err := json.Unmarshal(body, &respBody); err != nil {
-		return "", fmt.Errorf("error parsing response: %v", err)
-	}
+	// // Parse response
+	// var respBody response
+	// if err := json.Unmarshal(body, &respBody); err != nil {
+	// 	return "", fmt.Errorf("error parsing response: %v", err)
+	// }
 
-	if len(respBody.Choices) == 0 {
-		return "", fmt.Errorf("no response from API")
-	}
+	// if len(respBody.Choices) == 0 {
+	// 	return "", fmt.Errorf("no response from API")
+	// }
 
-	return g.cleanGeneratedCode(respBody.Choices[0].Message.Content), nil
+	// var code string = respBody.Choices[0].Message.Content
+
+	// TODO: Revert temporary change to use pregenerated code to save on LLM costs
+	code := `package main
+
+import "fmt"
+
+func twoSum(nums []int, target int) []int {
+    numMap := make(map[int]int)
+    for i, num := range nums {
+        complement := target - num
+        if idx, found := numMap[complement]; found {
+            return []int{idx, i}
+        }
+        numMap[num] = i
+    }
+    return nil
 }
 
-// SaveGeneratedCode saves the generated code to a file
-func (g *OpenAIGenerator) SaveGeneratedCode(code string, problem *Problem) error {
-	filename := fmt.Sprintf("%s_%s.go", strings.ToLower(g.model), problem.Title)
-	filepath := filepath.Join("generated", filename)
+func main() {
+    nums := []int{2, 7, 11, 15}
+    target := 9
+    result := twoSum(nums, target)
+    fmt.Println(result)
+}`
 
-	if err := os.WriteFile(filepath, []byte(code), 0644); err != nil {
-		return fmt.Errorf("error saving generated code: %v", err)
-	}
-
-	return nil
-}
-
-func (g *OpenAIGenerator) createPrompt(problem *Problem) string {
-	var sb strings.Builder
-
-	sb.WriteString(fmt.Sprintf("Generate a Go solution for LeetCode problem: %s\n\n",
-		problem.Title))
-	sb.WriteString(fmt.Sprintf("Difficulty: %s\n\n", problem.Difficulty))
-	sb.WriteString("Problem Statement:\n")
-	sb.WriteString(problem.Statement)
-	sb.WriteString("\n\nParameters:\n")
-
-	for _, param := range problem.Parameters {
-		sb.WriteString(fmt.Sprintf("- %s (%s)", param.Name, param.Type))
-		if param.LowerBound != nil {
-			sb.WriteString(fmt.Sprintf(", Lower bound: %v", param.LowerBound))
-		}
-		if param.UpperBound != nil {
-			sb.WriteString(fmt.Sprintf(", Upper bound: %v", param.UpperBound))
-		}
-		sb.WriteString("\n")
-	}
-
-	return sb.String()
-}
-
-func (g *OpenAIGenerator) cleanGeneratedCode(code string) string {
-	code = strings.TrimPrefix(code, "```go")
-	code = strings.TrimPrefix(code, "```")
-	code = strings.TrimSuffix(code, "```")
-	return strings.TrimSpace(code)
+	return cleanGeneratedCode(code), nil
 }
