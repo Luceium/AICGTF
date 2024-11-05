@@ -3,6 +3,9 @@ package generator
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 // Generator defines the interface for code generation
@@ -45,4 +48,49 @@ func NewGenerator(config GeneratorConfig) (Generator, error) {
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", config.Provider)
 	}
+}
+
+// SaveGeneratedCode saves the generated code to a file
+func SaveGeneratedCode(code string, problem *Problem, model string) error {
+	filename := fmt.Sprintf("%s_%s.go", strings.ToLower(model), problem.Title)
+	filepath := filepath.Join("out/generated", filename)
+
+	if err := os.WriteFile(filepath, []byte(code), 0644); err != nil {
+		return fmt.Errorf("error saving generated code: %v", err)
+	}
+
+	return nil
+}
+
+// createPrompt creates a prompt for the AI model based on the problem
+func createPrompt(problem *Problem) string {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("Generate a Go solution for LeetCode problem: %s\n\n",
+		problem.Title))
+	sb.WriteString(fmt.Sprintf("Difficulty: %s\n\n", problem.Difficulty))
+	sb.WriteString("Problem Statement:\n")
+	sb.WriteString(problem.Statement)
+	sb.WriteString("\n\nParameters:\n")
+
+	for _, param := range problem.Parameters {
+		sb.WriteString(fmt.Sprintf("- %s (%s)", param.Name, param.Type))
+		if param.LowerBound != nil {
+			sb.WriteString(fmt.Sprintf(", Lower bound: %v", param.LowerBound))
+		}
+		if param.UpperBound != nil {
+			sb.WriteString(fmt.Sprintf(", Upper bound: %v", param.UpperBound))
+		}
+		sb.WriteString("\n")
+	}
+
+	return sb.String()
+}
+
+// cleanGeneratedCode removes markdown code block syntax and trims whitespace
+func cleanGeneratedCode(code string) string {
+	code = strings.TrimPrefix(code, "```go")
+	code = strings.TrimPrefix(code, "```")
+	code = strings.TrimSuffix(code, "```")
+	return strings.TrimSpace(code)
 }
