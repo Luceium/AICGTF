@@ -1,6 +1,5 @@
 package evaluator
 
-//
 type EvaluatorInterface interface {
 	// Evaluates the code and returns an evaluation result
 	EvaluateCode() (ResultInterface, error)
@@ -24,7 +23,7 @@ type ComprehensiveEvaluationResult struct {
 }
 
 func EvaluateCode(filepath string) (*ComprehensiveEvaluationResult, error) {
-	evaluators := [2]EvaluatorInterface{
+	evaluators := [1]EvaluatorInterface{
 		GetQualityEvaluator(filepath),
 		// GetTestCaseEvaluator(filepath),
 	}

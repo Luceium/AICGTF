@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -62,11 +63,13 @@ func main() {
 	}
 
 	// Evaluate the code quality
-	fmt.Printf("Successfully generated and saved code for %s\n", p.Title)
+	// fmt.Printf("Successfully generated and saved code for %s\n", p.Title)
 	evaluationResult, err := evaluator.EvaluateCode(filepath)
 	if err != nil {
 		log.Fatalf("Failed to evaluate code: %v", err)
 	}
 
-	fmt.Printf("Evaluation result: %v\n", evaluationResult)
+	if data, err := json.Marshal(*evaluationResult); err == nil {
+		fmt.Printf("Evaluation result: %v\n", string(data))
+	}
 }

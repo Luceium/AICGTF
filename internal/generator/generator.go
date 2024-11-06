@@ -53,6 +53,14 @@ func NewGenerator(config GeneratorConfig) (Generator, error) {
 // SaveGeneratedCode saves the generated code to a file
 func SaveGeneratedCode(code string, problem *Problem, model string) (string, error) {
 	filename := fmt.Sprintf("%s_%s.go", strings.ToLower(model), problem.Title)
+
+	//check that the parent path exists
+	if _, err := os.Stat("out/generated"); os.IsNotExist(err) {
+		if err := os.MkdirAll("out/generated", 0755); err != nil {
+			return "", fmt.Errorf("error creating output directory: %v", err)
+		}
+	}
+
 	filepath := filepath.Join("out/generated", filename)
 
 	if err := os.WriteFile(filepath, []byte(code), 0644); err != nil {

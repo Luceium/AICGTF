@@ -92,7 +92,7 @@ func (g *OpenAIGenerator) GenerateCode(problem *Problem) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+g.apiKey)
 
-	fmt.Printf("Request: %s\n", string(jsonData))
+	// fmt.Printf("Request: %s\n", string(jsonData))
 
 	// // Make request
 	// resp, err := g.client.Do(req)
